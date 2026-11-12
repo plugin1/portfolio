@@ -126,17 +126,25 @@ if(publicationRoot)selectArticle(0);
 <script>
 (()=>{
 function watch(host,media,note){
- host.style.position='relative';const label=document.createElement('div');label.className='resource-loading';label.setAttribute('role','status');label.textContent=media.tagName==='IFRAME'?'正在加载预览，请稍候…':'图片加载中…';host.append(label);host.setAttribute('aria-busy','true');
- const timer=setTimeout(()=>{if(label.isConnected)label.textContent='加载较慢，请稍候；也可通过原文或新窗口打开。'},15000);
- const done=()=>{clearTimeout(timer);label.remove();host.setAttribute('aria-busy','false');if(note&&media.tagName==='IFRAME')note.textContent='预览页面已打开，内部素材可能仍在加载；长时间空白时可从原文或新窗口打开。';};
- media.addEventListener('load',done,{once:true});media.addEventListener('error',()=>{clearTimeout(timer);label.textContent='暂时无法加载，请检查网络或打开原文。';host.setAttribute('aria-busy','false')},{once:true});
+ host.style.position='relative';const label=document.createElement('div');label.className='resource-loading';label.setAttribute('role','status');const isGame=/itch\.io/.test(media.src);const vpn=isGame?' 中国大陆访问 itch.io 需要 VPN。':'';label.textContent=(media.tagName==='IFRAME'?'正在加载预览，请稍候…':'图片加载中…')+vpn;host.append(label);host.setAttribute('aria-busy','true');
+ const timer=setTimeout(()=>{if(label.isConnected)label.textContent='加载较慢，可尝试新窗口打开。'+vpn},15000);
+ const done=()=>{clearTimeout(timer);label.remove();host.setAttribute('aria-busy','false');if(note)note.textContent=media.tagName==='IFRAME'?(isGame?'中国大陆访问 itch.io 需要 VPN。':'页面已打开，内部素材仍可能加载中。'):'';};
+ media.addEventListener('load',done,{once:true});media.addEventListener('error',()=>{clearTimeout(timer);label.textContent='暂时无法加载，请检查网络或打开原文。'+vpn;host.setAttribute('aria-busy','false')},{once:true});
  if(media.tagName==='IMG'&&media.complete&&media.naturalWidth)done();
 }
 const launchOriginal=window.launch;window.launch=function(i){launchOriginal(i);const host=document.getElementById('stage'+i);watch(host,host.querySelector('iframe'),document.getElementById('status'+i));};
-const selectOriginal=window.selectArticle;window.selectArticle=function(i){selectOriginal(i);const host=document.getElementById('publication-screen');let note=document.getElementById('preview-loading-note');if(!note){note=document.createElement('p');note.id='preview-loading-note';note.className='resource-note';host.parentElement.append(note)}note.textContent='正在加载预览…';const media=host.querySelector('img,iframe');watch(host,media,note);if(media.tagName==='IMG')media.addEventListener('load',()=>note.textContent='',{once:true});};
-document.querySelectorAll('.gallery img,.recap img').forEach(img=>{if(img.complete&&img.naturalWidth)return;img.classList.add('resource-image-pending');const note=document.createElement('span');note.className='resource-note';note.textContent='图片加载中…';img.after(note);img.addEventListener('load',()=>{img.classList.remove('resource-image-pending');note.remove()},{once:true});img.addEventListener('error',()=>{img.classList.remove('resource-image-pending');img.classList.add('resource-image-error');note.textContent='图片暂时无法加载，请刷新重试。'},{once:true});});
+const selectOriginal=window.selectArticle;window.selectArticle=function(i){selectOriginal(i);const host=document.getElementById('publication-screen');let note=document.getElementById('preview-loading-note');if(!note){note=document.createElement('p');note.id='preview-loading-note';note.className='resource-note';host.append(note)}note.textContent='正在加载预览…';const media=host.querySelector('img,iframe');watch(host,media,note);if(media.tagName==='IMG')media.addEventListener('load',()=>note.textContent='',{once:true});};
+document.querySelectorAll('.gallery img,.recap img').forEach(img=>{if(img.complete&&img.naturalWidth)return;img.classList.add('resource-image-pending');const note=document.createElement('span');note.className='resource-note image-load-note';note.textContent='图片加载中…';img.parentElement.style.position='relative';img.after(note);img.addEventListener('load',()=>{img.classList.remove('resource-image-pending');note.remove()},{once:true});img.addEventListener('error',()=>{img.classList.remove('resource-image-pending');img.classList.add('resource-image-error');note.textContent='图片暂时无法加载，请刷新重试。'},{once:true});});
 if(document.getElementById('publications'))window.selectArticle(0);
 })();
 </script>
+<style>
+/* Loading feedback never changes document flow. */
+.controls [id^="status"]{display:block!important;flex:0 0 100%!important;height:3.2em!important;min-height:3.2em;max-height:3.2em;line-height:1.6!important;overflow:hidden;font-size:12px!important;margin:0!important;}
+#preview-loading-note{position:absolute;bottom:0;left:0;right:0;z-index:5;margin:0;padding:6px 10px;background:#f6f5f1ed;pointer-events:none;box-sizing:border-box;height:44px;line-height:16px;}
+#preview-loading-note:empty{visibility:hidden;}
+.image-load-note{position:absolute;inset:auto 0 0;z-index:3;background:#f6f5f1ed;padding:4px 6px;margin:0;pointer-events:none;}
+.resource-loading{padding:20px;box-sizing:border-box;}
+</style>
 </body>
 </html>
